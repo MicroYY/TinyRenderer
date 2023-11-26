@@ -89,6 +89,31 @@ int main(int, char**)
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
     //ImGui::StyleColorsLight();
+    
+
+    // We need to pass a D3D12_CPU_DESCRIPTOR_HANDLE in ImTextureID, so make sure it will fit
+    static_assert(sizeof(ImTextureID) >= sizeof(D3D12_CPU_DESCRIPTOR_HANDLE), "D3D12_CPU_DESCRIPTOR_HANDLE is too large to fit in an ImTextureID");
+
+    // We presume here that we have our D3D device pointer in g_pd3dDevice
+
+    int my_image_width = 0;
+    int my_image_height = 0;
+    ID3D12Resource* my_texture = NULL;
+
+    // Get CPU/GPU handles for the shader resource view
+    // Normally your engine will have some sort of allocator for these - here we assume that there's an SRV descriptor heap in
+    // g_pd3dSrvDescHeap with at least two descriptors allocated, and descriptor 1 is unused
+    UINT handle_increment = g_pd3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    int descriptor_index = 1; // The descriptor table index to use (not normally a hard-coded constant, but in this case we'll assume we have slot 1 reserved for us)
+    D3D12_CPU_DESCRIPTOR_HANDLE my_texture_srv_cpu_handle = g_pd3dSrvDescHeap->GetCPUDescriptorHandleForHeapStart();
+    my_texture_srv_cpu_handle.ptr += (handle_increment * descriptor_index);
+    D3D12_GPU_DESCRIPTOR_HANDLE my_texture_srv_gpu_handle = g_pd3dSrvDescHeap->GetGPUDescriptorHandleForHeapStart();
+    my_texture_srv_gpu_handle.ptr += (handle_increment * descriptor_index);
+
+    // Load the texture from a file
+    bool ret = LoadTextureFromFile("../../assets/MyImage01.jpg", g_pd3dDevice, my_texture_srv_cpu_handle, &my_texture, &my_image_width, &my_image_height);
+    IM_ASSERT(ret);
+
 
     // Setup Platform/Renderer backends
     ImGui_ImplWin32_Init(hwnd);
@@ -174,6 +199,16 @@ int main(int, char**)
             ImGui::Text("Hello from another window!");
             if (ImGui::Button("Close Me"))
                 show_another_window = false;
+            ImGui::End();
+        }
+
+        {
+            ImGui::Begin("DirectX12 Texture Test");
+            ImGui::Text("CPU handle = %p", my_texture_srv_cpu_handle.ptr);
+            ImGui::Text("GPU handle = %p", my_texture_srv_gpu_handle.ptr);
+            ImGui::Text("size = %d x %d", my_image_width, my_image_height);
+            // Note that we pass the GPU SRV handle here, *not* the CPU handle. We're passing the internal pointer value, cast to an ImTextureID
+            ImGui::Image((ImTextureID)my_texture_srv_gpu_handle.ptr, ImVec2((float)my_image_width, (float)my_image_height));
             ImGui::End();
         }
 
@@ -343,6 +378,13 @@ bool CreateDeviceD3D(HWND hWnd)
         g_pSwapChain->SetMaximumFrameLatency(NUM_BACK_BUFFERS);
         g_hSwapChainWaitableObject = g_pSwapChain->GetFrameLatencyWaitableObject();
     }
+
+    D3D12_DESCRIPTOR_HEAP_DESC desc = {};
+    desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+    desc.NumDescriptors = 2; // <-- Set this value to 2 (the first descriptor is used for the built-in font texture, the second for our new texture)
+    desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+    if (g_pd3dDevice->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&g_pd3dSrvDescHeap)) != S_OK)
+        return false;
 
     CreateRenderTarget();
     return true;
