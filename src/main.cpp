@@ -13,6 +13,8 @@
 #include <dxgi1_4.h>
 #include <tchar.h>
 
+import file;
+
 #ifdef _DEBUG
 #define DX12_ENABLE_DEBUG_LAYER
 #endif
@@ -63,7 +65,7 @@ int main(int, char**)
     //ImGui_ImplWin32_EnableDpiAwareness();
     WNDCLASSEXW wc = { sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, L"ImGui Example", NULL };
     ::RegisterClassExW(&wc);
-    HWND hwnd = ::CreateWindowW(wc.lpszClassName, L"Dear ImGui DirectX12 Example", WS_OVERLAPPEDWINDOW, 100, 100, 1280, 800, NULL, NULL, wc.hInstance, NULL);
+    HWND hwnd = ::CreateWindowW(wc.lpszClassName, L"TinyRenderer", WS_OVERLAPPEDWINDOW, 100, 100, 1280, 800, NULL, NULL, wc.hInstance, NULL);
 
     // Initialize Direct3D
     if (!CreateDeviceD3D(hwnd))
@@ -112,7 +114,7 @@ int main(int, char**)
     //IM_ASSERT(font != NULL);
 
     // Our state
-    bool show_demo_window = true;
+    bool show_demo_window = false;
     bool show_another_window = false;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
