@@ -2,6 +2,7 @@ add_executable(TinyRenderer)
 
 set(modules
   file.ixx
+  shader.ixx
 )
 
 target_sources(TinyRenderer PRIVATE
