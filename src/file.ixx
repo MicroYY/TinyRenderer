@@ -5,15 +5,6 @@ module;
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-#ifdef _DEBUG
-#define DX12_ENABLE_DEBUG_LAYER
-#endif
-
-#ifdef DX12_ENABLE_DEBUG_LAYER
-#include <dxgidebug.h>
-#pragma comment(lib, "dxguid.lib")
-#endif
-
 export module file;
 
 // Simple helper function to load an image into a DX12 texture with common settings
