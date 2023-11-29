@@ -20,7 +20,7 @@ if(BACKEND STREQUAL "dx12")
         d3d12
         dxgi
     )
-elseif(BACKEND STREQUAL "ogl")
+else()
     file(GLOB imgui_backend
         CONFIGURE_DEPENDS "${imgui_backend_dir}/imgui_impl_glfw.cpp"
         CONFIGURE_DEPENDS "${imgui_backend_dir}/imgui_impl_opengl3.cpp"
