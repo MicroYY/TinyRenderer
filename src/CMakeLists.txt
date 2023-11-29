@@ -1,7 +1,7 @@
 add_executable(TinyRenderer)
 
 set(modules
-  file.ixx
+  #file.ixx
   shader.ixx
 )
 
