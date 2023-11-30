@@ -19,8 +19,7 @@ if(BACKEND STREQUAL "dx12")
   )
 else()
   target_sources(TinyRenderer PRIVATE
-    #main_ogl.cpp
-    test_ogl.cpp
+    main_ogl.cpp
   )
   target_link_libraries(TinyRenderer PRIVATE
     glad
@@ -30,3 +29,9 @@ endif()
 target_include_directories(TinyRenderer PRIVATE
   ${PROJECT_SOURCE_DIR}/3rdParty/stb
 )
+
+option(ENABLE_GRAPHICSAPI_DEMO "enable graphics API demo" ON)
+
+if(ENABLE_GRAPHICSAPI_DEMO)
+  include(graphicsAPIdemo/graphicsAPIdemo.cmake)
+endif()

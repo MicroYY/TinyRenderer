@@ -68,8 +68,8 @@ int main()
         return -1;
     }
 
-    Shader shaderGradient("../../src/shaders/shader.vs", "../../src/shaders/shader.fs");
-    Shader shaderTexture("../../src/shaders/texShader.vs", "../../src/shaders/texShader.fs");
+    Shader shaderGradient("../../src/graphicsAPIdemo/shaders/shader.vs", "../../src/graphicsAPIdemo/shaders/shader.fs");
+    Shader shaderTexture("../../src/graphicsAPIdemo/shaders/texShader.vs", "../../src/graphicsAPIdemo/shaders/texShader.fs");
 
     // build and compile our shader program
     // ------------------------------------
