@@ -237,6 +237,7 @@ int main()
     // ------------------------------------------------------------------------
     glDeleteVertexArrays(3, VAO);
     glDeleteBuffers(3, VBO);
+    glDeleteBuffers(1, &EBO);
     glDeleteProgram(shaderProgramBlue);
 
     // glfw: terminate, clearing all previously allocated GLFW resources.
