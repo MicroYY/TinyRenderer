@@ -1,8 +1,9 @@
 add_executable(TinyRenderer)
 
 set(modules
-  #file.ixx
+  file.ixx
   shader.ixx
+  tiny_render.ixx
 )
 
 target_sources(TinyRenderer PRIVATE
@@ -11,6 +12,7 @@ target_sources(TinyRenderer PRIVATE
 
 target_link_libraries(TinyRenderer PRIVATE
   imgui
+  imguiFileDialog
 )
 
 if(BACKEND STREQUAL "dx12")

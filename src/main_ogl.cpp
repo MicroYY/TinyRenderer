@@ -6,6 +6,8 @@
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+
+#include "ImGuiFileDialog.h"
 #include <stdio.h>
 #define GL_SILENCE_DEPRECATION
 #if defined(IMGUI_IMPL_OPENGL_ES2)
@@ -13,11 +15,14 @@
 #endif
 #include <glad/glad.h>
 #include <GLFW/glfw3.h> // Will drag system OpenGL headers
+#include <string>
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+//#define STB_IMAGE_IMPLEMENTATION
+//#include "stb_image.h"
 
 import shader;
+import file;
+import renderer;
 
 // [Win32] Our example includes a copy of glfw3.lib pre-compiled with VS2010 to maximize ease of testing and compatibility with old VS compilers.
 // To link with VS2010-era libraries, VS2015+ requires linking with legacy_stdio_definitions.lib, which we do using this pragma.
@@ -36,12 +41,23 @@ static void glfw_error_callback(int error, const char* description)
     fprintf(stderr, "GLFW Error %d: %s\n", error, description);
 }
 
+std::string      filePathName;
+std::string      filePath;
+bool             pictureLoaded = false;
+bool             modelLoaded = false;
+ImGuiFileDialog  pictureFD;
+ImGuiFileDialog  modelFD;
+TinyRender       renderer;
 static void ShowMenuFile()
 {
     //ImGui::MenuItem("(demo menu)", NULL, false, false);
-    if (ImGui::MenuItem("Open", "Ctrl+O"))
+    if (ImGui::MenuItem("Open image", "Ctrl+I"))
     {
-
+        pictureFD.OpenDialog("ChooseFileDlgKey", "Choose File", ".png,.jpg", ".");
+    }
+    if (ImGui::MenuItem("Open model", "Ctrl+M"))
+    {
+        modelFD.OpenDialog("ChooseFileDlgKey", "Choose File", ".*", ".");
     }
 }
 
@@ -131,15 +147,7 @@ int main(int, char**)
 
     Shader shaderTexture("../../src/graphicsAPIdemo/shaders/texShader.vs", "../../src/graphicsAPIdemo/shaders/texShader.fs");
 
-    int width, height, nrChannels;
-    stbi_set_flip_vertically_on_load(true);
-    unsigned char* data = stbi_load("../../assets/furina.png", &width, &height, &nrChannels, 0);
     unsigned int texture;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-    glGenerateMipmap(GL_TEXTURE_2D);
-    stbi_image_free(data);
 
     float rectangle[] = {
         1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 0.0f, 1.0f, 1.0f,
@@ -213,8 +221,42 @@ int main(int, char**)
                     ShowMenuFile();
                     ImGui::EndMenu();
                 }
-
                 ImGui::EndMenuBar();
+            }
+
+            if (pictureFD.Display("ChooseFileDlgKey"))
+            {
+                if (pictureFD.IsOk())
+                {
+                    filePathName = pictureFD.GetFilePathName();
+                    filePath = pictureFD.GetCurrentPath();
+
+                    if(pictureLoaded)
+                    {
+                        glDeleteTextures(1, &texture);
+                    }
+
+                    int width, height, nChannels;
+                    if (LoadTextureFromFile(filePathName, width, height, nChannels, texture))
+                    {
+                        pictureLoaded = true;
+                    }
+                }
+                pictureFD.Close();
+            }
+
+            if (modelFD.Display("ChooseFileDlgKey"))
+            {
+                if (modelFD.IsOk())
+                {
+                    filePathName = modelFD.GetFilePathName();
+                    filePath = modelFD.GetCurrentPath();
+
+                    renderer.Init(filePathName);
+                    renderer.Render();
+
+                }
+                modelFD.Close();
             }
 
             ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
@@ -243,11 +285,13 @@ int main(int, char**)
             ImGui::End();
         }
 
-        shaderTexture.use();
-        glBindTexture(GL_TEXTURE_2D, texture);
-        glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
+        if (pictureLoaded || modelLoaded)
+        {
+            shaderTexture.use();
+            glBindTexture(GL_TEXTURE_2D, texture);
+            glBindVertexArray(VAO);
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        }
         // Rendering
         ImGui::Render();
         int display_w, display_h;
@@ -264,6 +308,11 @@ int main(int, char**)
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
     glDeleteBuffers(1, &EBO);
+
+    if (pictureLoaded || modelLoaded)
+    {
+        glDeleteTextures(1, &texture);
+    }
 
     // Cleanup
     ImGui_ImplOpenGL3_Shutdown();

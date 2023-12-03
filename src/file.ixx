@@ -4,6 +4,9 @@ module;
 #include "imgui.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+#include <string>
 
 export module file;
 
@@ -162,6 +165,37 @@ export bool LoadTextureFromFile(const char* filename, ID3D12Device* d3d_device, 
     *out_width = image_width;
     *out_height = image_height;
     stbi_image_free(image_data);
+
+    return true;
+}
+
+export bool LoadTextureFromFile(const std::string& filename, int& out_width, int& out_height, int& out_nChannels, unsigned int& texture)
+{
+    auto found = filename.find("png");
+    if (found != std::string::npos)
+    {
+        stbi_set_flip_vertically_on_load(true);
+    }
+    unsigned char* data = stbi_load(filename.c_str(), &out_width, &out_height, &out_nChannels, 0);
+    if (!data) return false;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    if (out_nChannels == 3)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, out_width, out_height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    }
+    else if (out_nChannels == 4)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, out_width, out_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    }
+    else
+    {
+        return false;
+    }
+
+    glGenerateMipmap(GL_TEXTURE_2D);
+    stbi_image_free(data);
 
     return true;
 }
