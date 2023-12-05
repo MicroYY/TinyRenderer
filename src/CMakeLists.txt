@@ -2,6 +2,8 @@ add_executable(TinyRenderer)
 
 set(modules
   file.ixx
+  matrix.ixx
+  model.ixx
   shader.ixx
   tiny_render.ixx
 )
