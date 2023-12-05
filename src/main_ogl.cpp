@@ -25,6 +25,7 @@ import shader;
 import file;
 import renderer;
 import matrix;
+import scene;
 
 // [Win32] Our example includes a copy of glfw3.lib pre-compiled with VS2010 to maximize ease of testing and compatibility with old VS compilers.
 // To link with VS2010-era libraries, VS2015+ requires linking with legacy_stdio_definitions.lib, which we do using this pragma.
@@ -43,13 +44,17 @@ static void glfw_error_callback(int error, const char* description)
     fprintf(stderr, "GLFW Error %d: %s\n", error, description);
 }
 
+int              windowWidth;
+int              windowHeight;
 std::string      filePathName;
 std::string      filePath;
 bool             pictureLoaded = false;
 bool             modelLoaded = false;
 ImGuiFileDialog  pictureFD;
 ImGuiFileDialog  modelFD;
-TinyRender       renderer;
+tr::TinyRender   renderer;
+tr::Scene     scene;
+
 static void ShowMenuFile()
 {
     //ImGui::MenuItem("(demo menu)", NULL, false, false);
@@ -189,6 +194,8 @@ int main(int, char**)
     while (!glfwWindowShouldClose(window))
 #endif
     {
+        glfwGetWindowSize(window, &windowWidth, &windowHeight);
+
         glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
         glClear(GL_COLOR_BUFFER_BIT);
         // Poll and handle events (inputs, window resize, etc.)
@@ -254,8 +261,13 @@ int main(int, char**)
                     filePathName = modelFD.GetFilePathName();
                     filePath = modelFD.GetCurrentPath();
 
+                    scene.init(windowWidth, windowHeight);
+
                     renderer.Init(filePathName);
-                    renderer.Render();
+                    if (renderer.Render(scene, texture))
+                    {
+                        modelLoaded = true;
+                    }
 
                 }
                 modelFD.Close();

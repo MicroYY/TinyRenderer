@@ -4,6 +4,7 @@ set(modules
   file.ixx
   matrix.ixx
   model.ixx
+  scene.ixx
   shader.ixx
   tiny_render.ixx
 )
