@@ -5,6 +5,7 @@ module;
 #include <GLFW/glfw3.h>
 import model;
 import scene;
+import matrix;
 
 export module renderer;
 
@@ -43,7 +44,7 @@ export namespace tr
 
 		for (size_t i = 0; i < m_model.GetFaceNum(); i++)
 		{
-			std::vector<int> face = m_model.GetFaces()[i];
+			matrix::Vec3i face = m_model.GetFaces()[i];
 			for (int j = 0; j < 3; j++)
 			{
 				matrix::Vec3f v0 = m_model.GetVertices()[face[j]];

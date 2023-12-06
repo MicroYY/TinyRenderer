@@ -17,10 +17,10 @@ export namespace model
 		size_t GetFaceNum();
 		size_t GetVertNum();
 		std::vector<matrix::Vec3f>& GetVertices();
-		std::vector<std::vector<int>>& GetFaces();
+		std::vector<matrix::Vec3i>& GetFaces();
 	private:
-		std::vector<matrix::Vec3f>    m_vertices;
-		std::vector<std::vector<int>> m_faces;
+		std::vector<matrix::Vec3f> m_vertices;
+		std::vector<matrix::Vec3i> m_faces;
 	};
 
 	bool Model::LoadModel(std::string& modelName)
@@ -50,15 +50,15 @@ export namespace model
 			}
 			else if (!line.compare(0, 2, "f "))
 			{
-				std::vector<int> f;
-				int itrash, idx;
+				int itrash;
+				int v0, v1, v2, vt0, vt1, vt2, vn0, vn1, vn2;
 				iss >> trash;
-				while (iss >> idx >> trash >> itrash >> trash >> itrash)
-				{
-					idx--;
-					f.push_back(idx);
-				}
-				m_faces.emplace_back(f);
+
+				iss >> v0 >> trash >> vt0 >> trash >> vn0;
+				iss >> v1 >> trash >> vt1 >> trash >> vn1;
+				iss >> v2 >> trash >> vt2 >> trash >> vn2;
+
+				m_faces.emplace_back(matrix::Vec3i(--v0, --v1, --v2));
 			}
 		}
 		std::cerr << "# v# " << m_vertices.size() << " f# " << m_faces.size() << std::endl;
@@ -82,7 +82,7 @@ export namespace model
 		return m_vertices;
 	}
 
-	std::vector<std::vector<int>>& Model::GetFaces()
+	std::vector<matrix::Vec3i>& Model::GetFaces()
 	{
 		return m_faces;
 	}

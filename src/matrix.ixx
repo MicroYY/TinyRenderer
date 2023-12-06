@@ -22,7 +22,7 @@ export namespace matrix
 		Vec2(T _u, T _v) : u(_u), v(_v) {}
 		type operator+(const type& other) { return type(u + other.u, v + other.v); }
 		type operator-(const type& other) { return type(u - other.u, v - other.v); }
-		type operator*(float f) { return type(u * f, v * f); }
+		type operator*(float f)           { return type(u * f, v * f); }
 		template <class> friend std::ostream& operator<<(std::ostream& out, type& other);
 	};
 
@@ -52,11 +52,13 @@ export namespace matrix
 		};
 		Vec3() : x(0), y(0), z(0) {}
 		Vec3(T _x, T _y, T _z) : x(_x), y(_y), z(_z) {}
-		type operator ^(const type& v) const { return type(y * v.z - z * v.y, z * v.x - x * v.z, x * v.y - y * v.x); }
-		type operator +(const type& v) const { return type(x + v.x, y + v.y, z + v.z); }
-		type operator -(const type& v) const { return type(x - v.x, y - v.y, z - v.z); }
-		type operator *(float f)          const { return type(x * f, y * f, z * f); }
-		T       operator *(const type& v) const { return x * v.x + y * v.y + z * v.z; }
+		type operator^ (const type& v) const { return type(y * v.z - z * v.y, z * v.x - x * v.z, x * v.y - y * v.x); }
+		type operator+ (const type& v) const { return type(x + v.x, y + v.y, z + v.z); }
+		type operator- (const type& v) const { return type(x - v.x, y - v.y, z - v.z); }
+		type operator* (float       f) const { return type(x * f, y * f, z * f); }
+		T    operator* (const type& v) const { return x * v.x + y * v.y + z * v.z; }
+		T    operator[](int         i) const { return data[i]; }
+
 		float norm() const { return std::sqrt(x * x + y * y + z * z); }
 		type& normalize(T l = 1) { *this = (*this) * (l / norm()); return *this; }
 		template <class > friend std::ostream& operator<<(std::ostream& s, type& v);
@@ -78,7 +80,7 @@ export namespace matrix
 
 	typedef Vec2<int>   Vec2i;
 	typedef Vec2<float> Vec2f;
-	typedef Vec2<int>   Vec2i;
+	typedef Vec3<int>   Vec3i;
 	typedef Vec3<float> Vec3f;
 
 }
