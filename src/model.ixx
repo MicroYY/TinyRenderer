@@ -1,6 +1,6 @@
 module;
 
-import matrix;
+import math;
 #include <string>
 #include <vector>
 #include <fstream>
@@ -16,11 +16,11 @@ export namespace model
 		bool LoadModel(std::string& modelName);
 		size_t GetFaceNum();
 		size_t GetVertNum();
-		std::vector<matrix::Vec3f>& GetVertices();
-		std::vector<matrix::Vec3i>& GetFaces();
+		std::vector<math::Vec3f>& GetVertices();
+		std::vector<math::Vec3i>& GetFaces();
 	private:
-		std::vector<matrix::Vec3f> m_vertices;
-		std::vector<matrix::Vec3i> m_faces;
+		std::vector<math::Vec3f> m_vertices;
+		std::vector<math::Vec3i> m_faces;
 	};
 
 	bool Model::LoadModel(std::string& modelName)
@@ -41,7 +41,7 @@ export namespace model
 			if (!line.compare(0, 2, "v "))
 			{
 				iss >> trash;
-				matrix::Vec3f v;
+				math::Vec3f v;
 				for (int i = 0; i < 3; i++)
 				{
 					iss >> v.data[i];
@@ -58,7 +58,7 @@ export namespace model
 				iss >> v1 >> trash >> vt1 >> trash >> vn1;
 				iss >> v2 >> trash >> vt2 >> trash >> vn2;
 
-				m_faces.emplace_back(matrix::Vec3i(--v0, --v1, --v2));
+				m_faces.emplace_back(math::Vec3i(--v0, --v1, --v2));
 			}
 		}
 		std::cerr << "# v# " << m_vertices.size() << " f# " << m_faces.size() << std::endl;
@@ -77,12 +77,12 @@ export namespace model
 		return m_vertices.size();
 	}
 
-	std::vector<matrix::Vec3f>& Model::GetVertices()
+	std::vector<math::Vec3f>& Model::GetVertices()
 	{
 		return m_vertices;
 	}
 
-	std::vector<matrix::Vec3i>& Model::GetFaces()
+	std::vector<math::Vec3i>& Model::GetFaces()
 	{
 		return m_faces;
 	}

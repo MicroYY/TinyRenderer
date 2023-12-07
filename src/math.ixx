@@ -3,9 +3,9 @@ module;
 #include <iostream>
 #include <cmath>
 
-export module matrix;
+export module math;
 
-export namespace matrix
+export namespace math
 {
 	template <class T>
 	struct Vec2
@@ -22,7 +22,7 @@ export namespace matrix
 		Vec2(T _u, T _v) : u(_u), v(_v) {}
 		type operator+(const type& other) { return type(u + other.u, v + other.v); }
 		type operator-(const type& other) { return type(u - other.u, v - other.v); }
-		type operator*(float f)           { return type(u * f, v * f); }
+		type operator*(float f) { return type(u * f, v * f); }
 		template <class> friend std::ostream& operator<<(std::ostream& out, type& other);
 	};
 
@@ -38,7 +38,7 @@ export namespace matrix
 		out << "(" << other.x << ", " << other.y << ")\n";
 		return out;
 	}
-	
+
 
 	template <class T>
 	struct Vec3
@@ -48,6 +48,7 @@ export namespace matrix
 		{
 			struct { T x, y, z; };
 			struct { T ivert, iuv, inorm; };
+			struct { T r, g, b; };
 			T data[3];
 		};
 		Vec3() : x(0), y(0), z(0) {}
@@ -82,5 +83,17 @@ export namespace matrix
 	typedef Vec2<float> Vec2f;
 	typedef Vec3<int>   Vec3i;
 	typedef Vec3<float> Vec3f;
+
+	typedef Vec2i       Point2i;
+	typedef Vec2f       Point2f;
+	typedef Vec3i       Point3i;
+	typedef Vec3f       Point3f;
+
+	typedef Point2f Triangle2f[3];
+	typedef Point2i Triangle2i[3];
+	typedef Point3f Triangle3f[3];
+	typedef Point3i Triangle3i[3];
+
+	typedef Vec3<uint8_t> Color;
 
 }

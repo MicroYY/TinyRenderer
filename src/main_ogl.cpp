@@ -24,7 +24,6 @@
 import shader;
 import file;
 import renderer;
-import matrix;
 import scene;
 
 // [Win32] Our example includes a copy of glfw3.lib pre-compiled with VS2010 to maximize ease of testing and compatibility with old VS compilers.
@@ -263,12 +262,9 @@ int main(int, char**)
 
                     scene.init(windowWidth, windowHeight);
 
-                    renderer.Init(filePathName);
-                    if (renderer.Render(scene, texture))
-                    {
-                        modelLoaded = true;
-                    }
+                    renderer.Init(filePathName, texture);
 
+                    modelLoaded = true;
                 }
                 modelFD.Close();
             }
@@ -297,6 +293,11 @@ int main(int, char**)
             if (ImGui::Button("Close Me"))
                 show_another_window = false;
             ImGui::End();
+        }
+
+        if (modelLoaded)
+        {
+            renderer.Render(scene);
         }
 
         if (pictureLoaded || modelLoaded)

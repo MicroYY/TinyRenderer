@@ -2,7 +2,7 @@ add_executable(TinyRenderer)
 
 set(modules
   file.ixx
-  matrix.ixx
+  math.ixx
   model.ixx
   scene.ixx
   shader.ixx
