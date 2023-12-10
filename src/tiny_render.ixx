@@ -1,6 +1,7 @@
 module;
 
 #include <string>
+#include <cmath>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 import model;
@@ -21,11 +22,15 @@ export namespace tr
 	private:
 		void DrawLine(math::Point2i& p0, math::Point2i& p1, int width, int height, math::Color&& color);
 		void DrawTriangle(math::Triangle2i& tri, int width, int height, math::Color& color);
+		void DrawTriangle(math::Triangle3f& tri, int width, int height, math::Color&& color);
+		bool InsideTriangle(math::Triangle3f& tri, int x, int y) const;
 
 		model::Model   m_model;
 		unsigned char* m_frameBuffer;
 
 		unsigned int   m_texture;
+
+		bool m_lineMode;
 	};
 
 	bool TinyRender::Init(std::string& modelName, unsigned int& texture)
@@ -50,15 +55,33 @@ export namespace tr
 
 		for (size_t i = 0; i < m_model.GetFaceNum(); i++)
 		{
-			math::Vec3i face = m_model.GetFaces()[i];
-			for (int j = 0; j < 3; j++)
+			if (m_lineMode)
 			{
-				math::Vec3f v0 = m_model.GetVertices()[face[j]];
-				math::Vec3f v1 = m_model.GetVertices()[face[(j + 1) % 3]];
-				math::Point2i p0((v0.x + 1.) * width / 2., (v0.y + 1.) * height / 2);
-				math::Point2i p1((v1.x + 1.) * width / 2., (v1.y + 1.) * height / 2.);
+				math::Vec3i face = m_model.GetFaces()[i];
+				for (int j = 0; j < 3; j++)
+				{
+					math::Vec3f v0 = m_model.GetVertices()[face[j]];
+					math::Vec3f v1 = m_model.GetVertices()[face[(j + 1) % 3]];
+					math::Point2i p0((v0.x + 1.) * width / 2., (v0.y + 1.) * height / 2.);
+					math::Point2i p1((v1.x + 1.) * width / 2., (v1.y + 1.) * height / 2.);
 
-				DrawLine(p0, p1, width, height, math::Color(255, 255, 255));
+					DrawLine(p0, p1, width, height, math::Color(255, 255, 255));
+				}
+			}
+			else
+			{
+				math::Vec3i face = m_model.GetFaces()[i];
+				math::Vec3f v0 = m_model.GetVertices()[face[0]];
+				math::Vec3f v1 = m_model.GetVertices()[face[1]];
+				math::Vec3f v2 = m_model.GetVertices()[face[2]];
+
+				math::Point3f p0((v0.x + 1.) * width / 2., (v0.y + 1.) * height / 2., 1);
+				math::Point3f p1((v1.x + 1.) * width / 2., (v1.y + 1.) * height / 2., 1);
+				math::Point3f p2((v2.x + 1.) * width / 2., (v2.y + 1.) * height / 2., 1);
+
+				math::Triangle3f tri = { p0, p1, p2 };
+
+				DrawTriangle(tri, width, height, math::Color(rand() % 255, rand() % 255, rand() % 255));
 			}
 		}
 		glBindTexture(GL_TEXTURE_2D, m_texture);
@@ -98,6 +121,8 @@ export namespace tr
 			if (steep)
 			{
 				int offset = (x * width + y) * 3;
+				if (offset >= width * height * 3)
+					continue;
 				m_frameBuffer[offset] = color.r;
 				m_frameBuffer[offset + 1] = color.g;
 				m_frameBuffer[offset + 2] = color.b;
@@ -105,6 +130,8 @@ export namespace tr
 			else
 			{
 				int offset = (y * width + x) * 3;
+				if (offset >= width * height * 3)
+					continue;
 				m_frameBuffer[offset] = color.r;
 				m_frameBuffer[offset + 1] = color.g;
 				m_frameBuffer[offset + 2] = color.b;
@@ -114,6 +141,56 @@ export namespace tr
 
 	void TinyRender::DrawTriangle(math::Triangle2i& tri, int width, int height, math::Color& color)
 	{
-		DrawLine(tri[0], tri[1], width, height, math::Color(255, 255, 255));
+		if (true)
+		{
+
+		}
+		else
+		{
+			DrawLine(tri[0], tri[1], width, height, math::Color(255, 255, 255));
+			DrawLine(tri[1], tri[2], width, height, math::Color(255, 255, 255));
+			DrawLine(tri[2], tri[0], width, height, math::Color(255, 255, 255));
+		}
+	}
+	
+	void TinyRender::DrawTriangle(math::Triangle3f& tri, int width, int height, math::Color&& color)
+	{
+		math::Vec2f bounding_min;
+		math::Vec2f	bounding_max;
+		bounding_min.x = std::min(tri[0].x, std::min(tri[1].x, tri[2].x));
+		bounding_min.y = std::min(tri[0].y, std::min(tri[1].y, tri[2].y));
+		bounding_max.x = std::max(tri[0].x, std::max(tri[1].x, tri[2].x));
+		bounding_max.y = std::max(tri[0].y, std::max(tri[1].y, tri[2].y));
+
+		for (int x = std::floor(bounding_min.x); x <= std::ceil(bounding_max.x); x++)
+		{
+			for (int y = std::floor(bounding_min.y); y <= std::ceil(bounding_max.y); y++)
+			{
+				if (InsideTriangle(tri, x + 0.5, y + 0.5))
+				{
+					int offset = (y * width + x) * 3;
+					m_frameBuffer[offset] = color.r;
+					m_frameBuffer[offset + 1] = color.g;
+					m_frameBuffer[offset + 2] = color.b;
+				}
+			}
+		}
+	}
+	bool TinyRender::InsideTriangle(math::Triangle3f& tri, int x, int y) const
+	{
+		math::Point3f p(x, y, 1);
+		math::Point3f a(tri[0]);
+		math::Point3f b(tri[1]);
+		math::Point3f c(tri[2]);
+
+		auto pa = p - a;
+		auto pb = p - b;
+		auto pc = p - c;
+
+		auto z1 = math::CrossProduct(pa, pb).z;
+		auto z2 = math::CrossProduct(pb, pc).z;
+		auto z3 = math::CrossProduct(pc, pa).z;
+
+		return z1 * z2 > 0 && z2 * z3 > 0;
 	}
 }
