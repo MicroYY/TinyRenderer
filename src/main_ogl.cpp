@@ -63,7 +63,7 @@ static void ShowMenuFile()
     }
     if (ImGui::MenuItem("Open model", "Ctrl+M"))
     {
-        modelFD.OpenDialog("ChooseFileDlgKey", "Choose File", ".*", ".");
+        modelFD.OpenDialog("ChooseFileDlgKey", "Choose File", ".*obj", ".");
     }
 }
 
@@ -99,7 +99,7 @@ int main(int, char**)
 #endif
 
     // Create window with graphics context
-    GLFWwindow* window = glfwCreateWindow(1280, 720, "Dear ImGui GLFW+OpenGL3 example", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(1280, 720, "Tiny renderer", NULL, NULL);
     if (window == NULL)
         return 1;
     glfwMakeContextCurrent(window);
@@ -239,7 +239,7 @@ int main(int, char**)
                     filePathName = pictureFD.GetFilePathName();
                     filePath = pictureFD.GetCurrentPath();
 
-                    if(pictureLoaded)
+                    if(pictureLoaded || modelLoaded)
                     {
                         glDeleteTextures(1, &texture);
                     }
@@ -248,6 +248,7 @@ int main(int, char**)
                     if (LoadTextureFromFile(filePathName, width, height, nChannels, texture))
                     {
                         pictureLoaded = true;
+                        modelLoaded = false;
                     }
                 }
                 pictureFD.Close();
@@ -260,11 +261,17 @@ int main(int, char**)
                     filePathName = modelFD.GetFilePathName();
                     filePath = modelFD.GetCurrentPath();
 
-                    scene.init(windowWidth, windowHeight);
+                    if (pictureLoaded || modelLoaded)
+                    {
+                        glDeleteTextures(1, &texture);
+                    }
+
+                    scene.Init(windowWidth, windowHeight);
 
                     renderer.Init(filePathName, texture);
 
                     modelLoaded = true;
+                    pictureLoaded = false;
                 }
                 modelFD.Close();
             }
@@ -297,6 +304,7 @@ int main(int, char**)
 
         if (modelLoaded)
         {
+            scene.Update(windowWidth, windowHeight);
             renderer.Render(scene);
         }
 
