@@ -289,6 +289,10 @@ int main(int, char**)
             ImGui::Text("counter = %d", counter);
 
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+            static auto lastTime = 0.0f;
+            auto timeElapsedInSecond = ImGui::GetTime() - lastTime;
+            ImGui::Text("Current frame rendering %.3f s/frame (%.1f FPS)", timeElapsedInSecond, 1.0f / timeElapsedInSecond);
+            lastTime = ImGui::GetTime();
             ImGui::End();
         }
 
