@@ -52,7 +52,8 @@ bool             modelLoaded = false;
 ImGuiFileDialog  pictureFD;
 ImGuiFileDialog  modelFD;
 tr::TinyRender   renderer;
-tr::Scene     scene;
+tr::Scene        scene;
+math::Vec3f      lightDir(0, 0, -1);
 
 static void ShowMenuFile()
 {
@@ -266,7 +267,7 @@ int main(int, char**)
                         glDeleteTextures(1, &texture);
                     }
 
-                    scene.Init(windowWidth, windowHeight);
+                    scene.Init(windowWidth, windowHeight, lightDir);
 
                     renderer.Init(filePathName, texture);
 

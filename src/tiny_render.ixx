@@ -47,6 +47,7 @@ export namespace tr
 	bool TinyRender::Render(Scene& scene)
 	{
 		auto [width, height] = scene.GetSize();
+		auto lightDir = scene.GetLight();
 		if (m_frameBuffer)
 			m_frameBuffer = (unsigned char*)realloc(m_frameBuffer, width * height * 3);
 		else
@@ -81,7 +82,14 @@ export namespace tr
 
 				math::Triangle3f tri = { p0, p1, p2 };
 
-				DrawTriangle(tri, width, height, math::Color(rand() % 255, rand() % 255, rand() % 255));
+				// Cross product to get normal
+				math::Vec3f normal = ((v2 - v0) ^ (v1 - v0)).normalize();
+				auto intensity = normal * lightDir;
+				if (intensity > 0)
+				{
+					// Back-face culling
+					DrawTriangle(tri, width, height, math::Color(intensity * 255, intensity * 255, intensity * 255));
+				}
 			}
 		}
 		glBindTexture(GL_TEXTURE_2D, m_texture);
