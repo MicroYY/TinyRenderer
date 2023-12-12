@@ -62,7 +62,7 @@ export namespace tr
 			m_zBuffer = (float*)malloc(width * height * sizeof(float));
 		for (int i = 0; i < width * height; i++)
 		{
-			m_zBuffer[i] = std::numeric_limits<double>::infinity();
+			m_zBuffer[i] = -std::numeric_limits<double>::infinity();
 		}
 
 		for (size_t i = 0; i < m_model.GetFaceNum(); i++)
@@ -87,9 +87,9 @@ export namespace tr
 				math::Vec3f v1 = m_model.GetVertices()[face[1]];
 				math::Vec3f v2 = m_model.GetVertices()[face[2]];
 
-				math::Point3f p0((v0.x + 1.) * width / 2., (v0.y + 1.) * height / 2., 1);
-				math::Point3f p1((v1.x + 1.) * width / 2., (v1.y + 1.) * height / 2., 1);
-				math::Point3f p2((v2.x + 1.) * width / 2., (v2.y + 1.) * height / 2., 1);
+				math::Point3f p0((v0.x + 1.) * width / 2., (v0.y + 1.) * height / 2., v0.z);
+				math::Point3f p1((v1.x + 1.) * width / 2., (v1.y + 1.) * height / 2., v1.z);
+				math::Point3f p2((v2.x + 1.) * width / 2., (v2.y + 1.) * height / 2., v2.z);
 
 				math::Triangle3f tri = { p0, p1, p2 };
 
@@ -187,17 +187,19 @@ export namespace tr
 		{
 			for (int y = std::floor(bounding_min.y); y <= std::ceil(bounding_max.y); y++)
 			{
-				if (InsideTriangle(tri, x + 0.5, y + 0.5))
+				if (InsideTriangle(tri, x, y))
 				{
+					// Get barycentric to interpolate depth z
 					auto [alpha, beta, gamma] = ComputeBarycentric(tri, x, y);
 					auto inteZ = alpha * tri[0].z + beta * tri[1].z + gamma * tri[2].z;
-					if (m_zBuffer[y * width + x] > inteZ)
+					int offset = y * width + x;
+					if (m_zBuffer[offset] < inteZ)
 					{
-						int offset = (y * width + x) * 3;
+						m_zBuffer[y * width + x] = inteZ;
+						offset *= 3;
 						m_frameBuffer[offset] = color.r;
 						m_frameBuffer[offset + 1] = color.g;
 						m_frameBuffer[offset + 2] = color.b;
-						m_zBuffer[y * width + x] = inteZ;
 					}
 				}
 			}
@@ -222,13 +224,13 @@ export namespace tr
 	}
 	std::tuple<float, float, float> TinyRender::ComputeBarycentric(math::Triangle3f& tri, int x, int y)
 	{
-		float c0, c1, c2;
-		math::Vec2f AB((tri[1] - tri[0]).x, (tri[1] - tri[0]).y);
-		math::Vec2f AC((tri[2] - tri[0]).x, (tri[2] - tri[0]).y);
-		math::Vec2f PA(tri[0].x - x, tri[0].y - y);
-		math::Matrix2f m(AB.x, AC.x, AB.y, AC.y);
-
-		auto xx = m.Inverse() * PA;
-		return { 1 - xx.x - xx.y, xx.x, xx.y };
+		math::Vec2f CA(tri[0].x - tri[2].x, tri[0].y - tri[2].y);
+		math::Vec2f CB(tri[1].x - tri[2].x, tri[1].y - tri[2].y);
+		math::Vec2f CP(x - tri[2].x, y - tri[2].y);
+		math::Matrix2f m(CA.x, CA.y, CB.x, CB.y);
+		auto inv = m.Inverse();
+		float u = CP.x * inv.a + CP.y * inv.c;
+		float v = CP.x * inv.b + CP.y * inv.d;
+		return { u, v, 1 - u - v };
 	}
 }
