@@ -24,9 +24,11 @@ export namespace tr
 		void DrawTriangle(math::Triangle2i& tri, int width, int height, math::Color& color);
 		void DrawTriangle(math::Triangle3f& tri, int width, int height, math::Color&& color);
 		bool InsideTriangle(math::Triangle3f& tri, int x, int y) const;
+		std::tuple<float, float, float> ComputeBarycentric(math::Triangle3f& tri, int x, int y);
 
 		model::Model   m_model;
 		unsigned char* m_frameBuffer;
+		float*         m_zBuffer;
 
 		unsigned int   m_texture;
 
@@ -53,6 +55,15 @@ export namespace tr
 		else
 			m_frameBuffer = (unsigned char*)malloc(width * height * 3);
 		memset(m_frameBuffer, 0, width * height * 3);
+
+		if (m_zBuffer)
+			m_zBuffer = (float*)realloc(m_zBuffer, width * height * sizeof(float));
+		else
+			m_zBuffer = (float*)malloc(width * height * sizeof(float));
+		for (int i = 0; i < width * height; i++)
+		{
+			m_zBuffer[i] = std::numeric_limits<double>::infinity();
+		}
 
 		for (size_t i = 0; i < m_model.GetFaceNum(); i++)
 		{
@@ -103,6 +114,8 @@ export namespace tr
 	{
 		if (m_frameBuffer)
 			free(m_frameBuffer);
+		if (m_zBuffer)
+			free(m_zBuffer);
 	}
 
 	void TinyRender::DrawLine(math::Point2i& p0, math::Point2i& p1, int width, int height, math::Color&& color)
@@ -176,10 +189,16 @@ export namespace tr
 			{
 				if (InsideTriangle(tri, x + 0.5, y + 0.5))
 				{
-					int offset = (y * width + x) * 3;
-					m_frameBuffer[offset] = color.r;
-					m_frameBuffer[offset + 1] = color.g;
-					m_frameBuffer[offset + 2] = color.b;
+					auto [alpha, beta, gamma] = ComputeBarycentric(tri, x, y);
+					auto inteZ = alpha * tri[0].z + beta * tri[1].z + gamma * tri[2].z;
+					if (m_zBuffer[y * width + x] > inteZ)
+					{
+						int offset = (y * width + x) * 3;
+						m_frameBuffer[offset] = color.r;
+						m_frameBuffer[offset + 1] = color.g;
+						m_frameBuffer[offset + 2] = color.b;
+						m_zBuffer[y * width + x] = inteZ;
+					}
 				}
 			}
 		}
@@ -200,5 +219,16 @@ export namespace tr
 		auto z3 = math::CrossProduct(pc, pa).z;
 
 		return z1 * z2 > 0 && z2 * z3 > 0;
+	}
+	std::tuple<float, float, float> TinyRender::ComputeBarycentric(math::Triangle3f& tri, int x, int y)
+	{
+		float c0, c1, c2;
+		math::Vec2f AB((tri[1] - tri[0]).x, (tri[1] - tri[0]).y);
+		math::Vec2f AC((tri[2] - tri[0]).x, (tri[2] - tri[0]).y);
+		math::Vec2f PA(tri[0].x - x, tri[0].y - y);
+		math::Matrix2f m(AB.x, AC.x, AB.y, AC.y);
+
+		auto xx = m.Inverse() * PA;
+		return { 1 - xx.x - xx.y, xx.x, xx.y };
 	}
 }

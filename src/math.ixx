@@ -23,7 +23,7 @@ export namespace math
 		type operator+(const type& other) { return type(u + other.u, v + other.v); }
 		type operator-(const type& other) { return type(u - other.u, v - other.v); }
 		type operator*(float f) { return type(u * f, v * f); }
-		template <class> friend std::ostream& operator<<(std::ostream& out, type& other);
+		template <class> friend std::ostream& operator<<(std::ostream& out, Vec2<T>& other);
 	};
 
 	template <class T>
@@ -62,7 +62,7 @@ export namespace math
 
 		float norm() const { return std::sqrt(x * x + y * y + z * z); }
 		type& normalize(T l = 1) { *this = (*this) * (l / norm()); return *this; }
-		template <class > friend std::ostream& operator<<(std::ostream& s, type& v);
+		template <class > friend std::ostream& operator<<(std::ostream& s, Vec3<T>& v);
 	};
 
 	template <class T>
@@ -84,6 +84,35 @@ export namespace math
 		return v1 ^ v2;
 	}
 
+	template <class T, int M, int N>
+	struct Matrix
+	{
+		T data[M][N];
+	};
+
+	template <class T>
+	struct Matrix<T, 2, 2>
+	{
+		typedef Matrix<T, 2, 2> type;
+
+		union
+		{
+			struct { T a, b, c, d; };
+			T data[2][2];
+		};
+
+		Matrix(T _a, T _b, T _c, T _d) : a(_a), b(_b), c(_c), d(_d) {};
+
+		type    operator*(const type& other) { return type(a * other.a + b * other.c, a * other.b + b * other.d, 
+														c * other.a + d * other.c, c * other.b + d * other.d); };
+		Vec2<T> operator*(const Vec2<T>& v) const { return Vec2<T>(a * v.x + b * v.y, c * v.x + d * v.y); };
+		type    operator/(float f) const { return type(a / f, b / f, c / f, d / f); };
+		
+		T    Det()     const { return data[0][0] * data[1][1] - data[0][1] * data[1][0]; };
+		type Inverse() const { return type(d, -b, -c, a) / Det(); };
+
+	};
+
 
 	typedef Vec2<int>   Vec2i;
 	typedef Vec2<float> Vec2f;
@@ -94,6 +123,9 @@ export namespace math
 	typedef Vec2f       Point2f;
 	typedef Vec3i       Point3i;
 	typedef Vec3f       Point3f;
+
+	typedef Matrix<float, 2, 2> Matrix2f;
+	typedef Matrix<float, 3, 3> Matrix3f;
 
 	typedef Point2f Triangle2f[3];
 	typedef Point2i Triangle2i[3];
