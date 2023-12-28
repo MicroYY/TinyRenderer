@@ -1,11 +1,12 @@
 add_executable(TinyRenderer)
 
 set(modules
-  file.ixx
+  io.ixx
   math.ixx
   model.ixx
   scene.ixx
   shader.ixx
+  tgaimage.ixx
   tiny_render.ixx
 )
 

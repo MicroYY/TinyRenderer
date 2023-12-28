@@ -61,7 +61,7 @@ export namespace model
 				m_faces.emplace_back(math::Vec3i(--v0, --v1, --v2));
 			}
 		}
-		std::cerr << "# v# " << m_vertices.size() << " f# " << m_faces.size() << std::endl;
+		std::cout << "# v# " << m_vertices.size() << " f# " << m_faces.size() << std::endl;
 
 		return 0;
 	}

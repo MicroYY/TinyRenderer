@@ -7,6 +7,7 @@ module;
 import model;
 import scene;
 import math;
+import io;
 
 export module renderer;
 
@@ -17,6 +18,7 @@ export namespace tr
 	public:
 		bool Init(std::string& modelName, unsigned int& texture);
 		bool Render(Scene& scene);
+		bool LoadTexture(std::string& textureName);
 		~TinyRender();
 
 	private:
@@ -108,6 +110,13 @@ export namespace tr
 		glGenerateMipmap(GL_TEXTURE_2D);
 
 		return true;
+	}
+
+	bool TinyRender::LoadTexture(std::string& textureName)
+	{
+		io::TgaImage image;
+		image.ReadTgaFile(textureName.c_str());
+		return false;
 	}
 
 	TinyRender::~TinyRender()
