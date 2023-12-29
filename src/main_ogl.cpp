@@ -21,6 +21,28 @@
 //#define STB_IMAGE_IMPLEMENTATION
 //#include "stb_image.h"
 
+///
+///      y
+///      ^
+///      |
+///      |
+///      |
+///      ----------------> x
+///      2D
+/// 
+///           y
+///           ^
+///           |
+///           |
+///           |
+///           ------------> x
+///          /
+///         / 
+///        /
+///       v
+///       z
+/// 
+
 import shader;
 import io;
 import renderer;
@@ -302,8 +324,8 @@ int main(int, char**)
 				{
 					if (textureFD.IsOk())
 					{
-						filePathName = modelFD.GetFilePathName();
-						filePath = modelFD.GetCurrentPath();
+						filePathName = textureFD.GetFilePathName();
+						filePath = textureFD.GetCurrentPath();
 
 						renderer.LoadTexture(filePathName);
 

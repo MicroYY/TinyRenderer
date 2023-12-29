@@ -84,10 +84,15 @@ export namespace tr
 			}
 			else
 			{
-				math::Vec3i face = m_model.GetFaces()[i];
-				math::Vec3f v0 = m_model.GetVertices()[face[0]];
-				math::Vec3f v1 = m_model.GetVertices()[face[1]];
-				math::Vec3f v2 = m_model.GetVertices()[face[2]];
+				////math::Vec3i face = m_model.GetFaces()[i];
+				////math::Vec3f v0 = m_model.GetVertices()[face[0]];
+				////math::Vec3f v1 = m_model.GetVertices()[face[1]];
+				////math::Vec3f v2 = m_model.GetVertices()[face[2]];
+
+				auto face = m_model.GetTriangles()[i];
+				auto v0 = face.vertices[0];
+				auto v1 = face.vertices[1];
+				auto v2 = face.vertices[2];
 
 				math::Point3f p0((v0.x + 1.) * width / 2., (v0.y + 1.) * height / 2., v0.z);
 				math::Point3f p1((v1.x + 1.) * width / 2., (v1.y + 1.) * height / 2., v1.z);
@@ -214,6 +219,7 @@ export namespace tr
 			}
 		}
 	}
+
 	bool TinyRender::InsideTriangle(math::Triangle3f& tri, int x, int y) const
 	{
 		math::Point3f p(x, y, 1);
@@ -231,6 +237,7 @@ export namespace tr
 
 		return z1 * z2 > 0 && z2 * z3 > 0;
 	}
+
 	std::tuple<float, float, float> TinyRender::ComputeBarycentric(math::Triangle3f& tri, int x, int y)
 	{
 		math::Vec2f CA(tri[0].x - tri[2].x, tri[0].y - tri[2].y);

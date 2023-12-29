@@ -8,6 +8,7 @@ set(modules
   shader.ixx
   tgaimage.ixx
   tiny_render.ixx
+  geometry.ixx
 )
 
 target_sources(TinyRenderer PRIVATE
