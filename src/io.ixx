@@ -107,12 +107,65 @@ export namespace io
 		bool Set(int x, int y, const TgaColor& c);
 		~TgaImage();
 		TgaImage& operator =(const TgaImage& img);
-		int GetWidth();
-		int GetHeight();
-		int GetBytespp();
-		unsigned char* Buffer();
+		
+		int GetWidth()          const { return m_width;   }
+		int GetHeight()         const { return m_height;  }
+		int GetBytespp()        const { return m_bytespp; }
+		unsigned char* Buffer() const { return m_data;    }
+
 		void Clear();
 	};
+
+	bool TgaImage::LoadRleData(std::ifstream& in)
+	{
+		unsigned long pixelcount = m_width * m_height;
+		unsigned long currentpixel = 0;
+		unsigned long currentbyte = 0;
+		TgaColor colorbuffer;
+		do {
+			unsigned char chunkheader = 0;
+			chunkheader = in.get();
+			if (!in.good()) {
+				std::cerr << "an error occured while reading the data\n";
+				return false;
+			}
+			if (chunkheader < 128) {
+				chunkheader++;
+				for (int i = 0; i < chunkheader; i++) {
+					in.read((char*)colorbuffer.bgra, m_bytespp);
+					if (!in.good()) {
+						std::cerr << "an error occured while reading the header\n";
+						return false;
+					}
+					for (int t = 0; t < m_bytespp; t++)
+						m_data[currentbyte++] = colorbuffer.bgra[t];
+					currentpixel++;
+					if (currentpixel > pixelcount) {
+						std::cerr << "Too many pixels read\n";
+						return false;
+					}
+				}
+			}
+			else {
+				chunkheader -= 127;
+				in.read((char*)colorbuffer.bgra, m_bytespp);
+				if (!in.good()) {
+					std::cerr << "an error occured while reading the header\n";
+					return false;
+				}
+				for (int i = 0; i < chunkheader; i++) {
+					for (int t = 0; t < m_bytespp; t++)
+						m_data[currentbyte++] = colorbuffer.bgra[t];
+					currentpixel++;
+					if (currentpixel > pixelcount) {
+						std::cerr << "Too many pixels read\n";
+						return false;
+					}
+				}
+			}
+		} while (currentpixel < pixelcount);
+		return true;
+	}
 
 	bool TgaImage::ReadTgaFile(const char* filename)
 	{
@@ -160,7 +213,12 @@ export namespace io
 		}
 		else if (header.datatypecode == 10 || header.datatypecode == 11)
 		{
-
+			if (!LoadRleData(in))
+			{
+				in.close();
+				std::cerr << "an error occurred while reading the data\n";
+				return false;
+			}
 		}
 		else
 		{
@@ -168,11 +226,12 @@ export namespace io
 			std::cerr << "unknown file format " << (int)header.datatypecode << "\n";
 		}
 
-		if (!(header.imagedescriptor & 0x20))
+		// do not flip
+		if ((header.imagedescriptor & 0x20))
 		{
 			FlipVertically();
 		}
-		if (!(header.imagedescriptor & 0x10))
+		if (header.imagedescriptor & 0x10)
 		{
 			FlipHorizontally();
 		}

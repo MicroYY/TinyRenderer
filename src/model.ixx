@@ -78,7 +78,7 @@ export namespace model
 				m_faces.emplace_back(math::Vec3i(--v0, --v1, --v2));
 
 				geo::Triangle tri;
-				tri.vertices[0]  = m_vertices[v0],   tri.vertices[1]  = m_vertices[v1],   tri.vertices[2]  = m_vertices[v2];
+				tri.vertices[0]  = m_vertices[v0],     tri.vertices[1]  = m_vertices[v1],     tri.vertices[2]  = m_vertices[v2];
 				tri.texCoords[0] = m_texCoords[--vt0], tri.texCoords[1] = m_texCoords[--vt1], tri.texCoords[2] = m_texCoords[--vt2];
 				tri.normals[0]   = m_normals[--vn0],   tri.normals[1]   = m_normals[--vn1],   tri.normals[2]   = m_normals[--vn2];
 

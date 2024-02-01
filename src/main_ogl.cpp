@@ -182,7 +182,7 @@ int main(int, char**)
 
 	Shader shaderTexture("../../src/graphicsAPIdemo/shaders/texShader.vs", "../../src/graphicsAPIdemo/shaders/texShader.fs");
 
-	unsigned int texture;
+	unsigned int textureHandle;
 
 	float rectangle[] = {
 		1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 0.0f, 1.0f, 1.0f,
@@ -270,11 +270,11 @@ int main(int, char**)
 
 					if (pictureLoaded || modelLoaded)
 					{
-						glDeleteTextures(1, &texture);
+						glDeleteTextures(1, &textureHandle);
 					}
 
 					int width, height, nChannels;
-					if (io::LoadTextureFromFile(filePathName, width, height, nChannels, texture))
+					if (io::LoadTextureFromFile(filePathName, width, height, nChannels, textureHandle))
 					{
 						pictureLoaded = true;
 						modelLoaded = false;
@@ -292,12 +292,12 @@ int main(int, char**)
 
 					if (pictureLoaded || modelLoaded)
 					{
-						glDeleteTextures(1, &texture);
+						glDeleteTextures(1, &textureHandle);
 					}
 
 					scene.Init(windowWidth, windowHeight, lightDir);
 
-					renderer.Init(filePathName, texture);
+					renderer.Init(filePathName, textureHandle);
 
 					modelLoaded = true;
 					pictureLoaded = false;
@@ -363,7 +363,7 @@ int main(int, char**)
 		if (pictureLoaded || modelLoaded)
 		{
 			shaderTexture.use();
-			glBindTexture(GL_TEXTURE_2D, texture);
+			glBindTexture(GL_TEXTURE_2D, textureHandle);
 			glBindVertexArray(VAO);
 			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		}
@@ -386,7 +386,7 @@ int main(int, char**)
 
 	if (pictureLoaded || modelLoaded)
 	{
-		glDeleteTextures(1, &texture);
+		glDeleteTextures(1, &textureHandle);
 	}
 
 	// Cleanup

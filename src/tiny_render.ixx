@@ -25,6 +25,7 @@ export namespace tr
 		void DrawLine(math::Point2i& p0, math::Point2i& p1, int width, int height, math::Color&& color);
 		void DrawTriangle(math::Triangle2i& tri, int width, int height, math::Color& color);
 		void DrawTriangle(math::Triangle3f& tri, int width, int height, math::Color&& color);
+		void DrawTriangleWithTexture(math::Triangle3f& tri, int width, int height, math::Vec2f*);
 		bool InsideTriangle(math::Triangle3f& tri, int x, int y) const;
 		std::tuple<float, float, float> ComputeBarycentric(math::Triangle3f& tri, int x, int y);
 
@@ -32,18 +33,20 @@ export namespace tr
 		unsigned char* m_frameBuffer;
 		float*         m_zBuffer;
 
-		unsigned int   m_texture;
+		unsigned int   m_gpuTextureHandle;
+
+		io::TgaImage   m_texture;
 
 		bool m_lineMode;
 	};
 
-	bool TinyRender::Init(std::string& modelName, unsigned int& texture)
+	bool TinyRender::Init(std::string& modelName, unsigned int& textureHandle)
 	{
 		m_model.LoadModel(modelName);
 
-		glGenTextures(1, &texture);
+		glGenTextures(1, &textureHandle);
 
-		m_texture = texture;
+		m_gpuTextureHandle = textureHandle;
 
 		return 0;
 	}
@@ -84,11 +87,6 @@ export namespace tr
 			}
 			else
 			{
-				////math::Vec3i face = m_model.GetFaces()[i];
-				////math::Vec3f v0 = m_model.GetVertices()[face[0]];
-				////math::Vec3f v1 = m_model.GetVertices()[face[1]];
-				////math::Vec3f v2 = m_model.GetVertices()[face[2]];
-
 				auto face = m_model.GetTriangles()[i];
 				auto v0 = face.vertices[0];
 				auto v1 = face.vertices[1];
@@ -98,19 +96,27 @@ export namespace tr
 				math::Point3f p1((v1.x + 1.) * width / 2., (v1.y + 1.) * height / 2., v1.z);
 				math::Point3f p2((v2.x + 1.) * width / 2., (v2.y + 1.) * height / 2., v2.z);
 
-				math::Triangle3f tri = { p0, p1, p2 };
+				math::Triangle3f tri   = { p0, p1, p2 };
+				math::Vec2f      vt[3] = { face.texCoords[0], face.texCoords[1], face.texCoords[2] };
 
 				// Cross product to get normal
 				math::Vec3f normal = ((v2 - v0) ^ (v1 - v0)).normalize();
 				auto intensity = normal * lightDir;
+				// Back-face culling
 				if (intensity > 0)
 				{
-					// Back-face culling
-					DrawTriangle(tri, width, height, math::Color(intensity * 255, intensity * 255, intensity * 255));
+					if (m_texture.Buffer())
+					{
+						DrawTriangleWithTexture(tri, width, height, vt);
+					}
+					else
+					{
+						DrawTriangle(tri, width, height, math::Color(intensity * 255, intensity * 255, intensity * 255));
+					}
 				}
 			}
 		}
-		glBindTexture(GL_TEXTURE_2D, m_texture);
+		glBindTexture(GL_TEXTURE_2D, m_gpuTextureHandle);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, m_frameBuffer);
 		glGenerateMipmap(GL_TEXTURE_2D);
 
@@ -119,9 +125,7 @@ export namespace tr
 
 	bool TinyRender::LoadTexture(std::string& textureName)
 	{
-		io::TgaImage image;
-		image.ReadTgaFile(textureName.c_str());
-		return false;
+		return m_texture.ReadTgaFile(textureName.c_str());
 	}
 
 	TinyRender::~TinyRender()
@@ -170,6 +174,41 @@ export namespace tr
 				m_frameBuffer[offset] = color.r;
 				m_frameBuffer[offset + 1] = color.g;
 				m_frameBuffer[offset + 2] = color.b;
+			}
+		}
+	}
+
+	void tr::TinyRender::DrawTriangleWithTexture(math::Triangle3f& tri, int width, int height, math::Vec2f* vt)
+	{
+		math::Vec2f bounding_min;
+		math::Vec2f	bounding_max;
+		bounding_min.x = std::min(tri[0].x, std::min(tri[1].x, tri[2].x));
+		bounding_min.y = std::min(tri[0].y, std::min(tri[1].y, tri[2].y));
+		bounding_max.x = std::max(tri[0].x, std::max(tri[1].x, tri[2].x));
+		bounding_max.y = std::max(tri[0].y, std::max(tri[1].y, tri[2].y));
+
+		for (int x = std::floor(bounding_min.x); x <= std::ceil(bounding_max.x); x++)
+		{
+			for (int y = std::floor(bounding_min.y); y <= std::ceil(bounding_max.y); y++)
+			{
+				if (InsideTriangle(tri, x, y))
+				{
+					// Get barycentric to interpolate depth z
+					auto [alpha, beta, gamma] = ComputeBarycentric(tri, x, y);
+					auto inteZ = alpha * tri[0].z + beta * tri[1].z + gamma * tri[2].z;
+					int offset = y * width + x;
+					if (m_zBuffer[offset] < inteZ)
+					{
+						m_zBuffer[y * width + x] = inteZ;
+						offset *= 3;
+						int u = (alpha * vt[0].u + beta * vt[1].u + gamma * vt[2].u) * m_texture.GetWidth();
+						int v = (alpha * vt[0].v + beta * vt[1].v + gamma * vt[2].v) * m_texture.GetHeight();
+						int idx = (v * m_texture.GetWidth() + u) * m_texture.GetBytespp();
+						m_frameBuffer[offset]     = m_texture.Buffer()[idx + 2];
+						m_frameBuffer[offset + 1] = m_texture.Buffer()[idx + 1];
+						m_frameBuffer[offset + 2] = m_texture.Buffer()[idx + 0];
+					}
+				}
 			}
 		}
 	}
