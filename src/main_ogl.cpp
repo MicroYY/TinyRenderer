@@ -77,7 +77,7 @@ ImGuiFileDialog  textureFD;
 tr::TinyRender   renderer;
 tr::Scene        scene;
 math::Vec3f      lightDir(0, 0, -1);
-
+std::chrono::duration<double> renderTiming;
 static void ShowMenuFile()
 {
 	//ImGui::MenuItem("(demo menu)", NULL, false, false);
@@ -244,7 +244,6 @@ int main(int, char**)
 		// 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
 		{
 			static float f = 0.0f;
-			static int counter = 0;
 
 			ImGuiWindowFlags window_flags = 0;
 			window_flags |= ImGuiWindowFlags_MenuBar;
@@ -312,10 +311,9 @@ int main(int, char**)
 			ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
 			ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
 
-			if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+			if (ImGui::Button("Load texture"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
 			{
 				LoadTexture();
-				counter++;
 			}
 
 			if (modelLoaded)
@@ -334,13 +332,9 @@ int main(int, char**)
 				}
 			}
 			ImGui::SameLine();
-			ImGui::Text("counter = %d", counter);
 
 			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-			static auto lastTime = 0.0f;
-			auto timeElapsedInSecond = ImGui::GetTime() - lastTime;
-			ImGui::Text("Current frame rendering %.3f s/frame (%.1f FPS)", timeElapsedInSecond, 1.0f / timeElapsedInSecond);
-			lastTime = ImGui::GetTime();
+			ImGui::Text("Current frame rendering %.3f s/frame (%.1f FPS)", renderTiming.count(), 1.0f / renderTiming.count());
 			ImGui::End();
 		}
 
@@ -357,7 +351,10 @@ int main(int, char**)
 		if (modelLoaded)
 		{
 			scene.Update(windowWidth, windowHeight);
+			auto start = std::chrono::system_clock::now();
 			renderer.Render(scene);
+			auto end = std::chrono::system_clock::now();
+			renderTiming = end - start;
 		}
 
 		if (pictureLoaded || modelLoaded)
