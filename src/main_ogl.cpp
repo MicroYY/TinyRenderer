@@ -74,10 +74,14 @@ bool             modelLoaded = false;
 ImGuiFileDialog  pictureFD;
 ImGuiFileDialog  modelFD;
 ImGuiFileDialog  textureFD;
-tr::TinyRender   renderer;
-tr::Scene        scene;
-math::Vec3f      lightDir(0, 0, -1);
 std::chrono::duration<double> renderTiming;
+
+tr::Config       config;
+tr::Camera       camera;
+tr::Scene        scene;
+tr::TinyRender   renderer;
+math::Vec3f      lightDir(0, 0, -1);
+
 static void ShowMenuFile()
 {
 	//ImGui::MenuItem("(demo menu)", NULL, false, false);
@@ -212,6 +216,10 @@ int main(int, char**)
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
 	glEnableVertexAttribArray(2);
 
+	config.proj = tr::Config::perspective;
+	camera.dir = math::Vec3f(0, 0, -1);
+	camera.pos = math::Vec3f(0, 0, 10);
+
 	// Main loop
 #ifdef __EMSCRIPTEN__
 	// For an Emscripten build we are disabling file-system access, so let's not attempt to do a fopen() of the imgui.ini file.
@@ -305,6 +313,12 @@ int main(int, char**)
 			}
 
 			ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+
+			static int projection = 0;
+			ImGui::RadioButton("orthogonal projection", &projection, tr::Config::orthogonal); ImGui::SameLine();
+			ImGui::RadioButton("perspective projection", &projection, tr::Config::perspective);
+			config.proj = (tr::Config::Projection)projection;
+
 			ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
 			ImGui::Checkbox("Another Window", &show_another_window);
 
@@ -350,7 +364,8 @@ int main(int, char**)
 
 		if (modelLoaded)
 		{
-			scene.Update(windowWidth, windowHeight);
+			scene.Update(windowWidth, windowHeight, camera);
+			renderer.UpdateConfig(config);
 			auto start = std::chrono::system_clock::now();
 			renderer.Render(scene);
 			auto end = std::chrono::system_clock::now();

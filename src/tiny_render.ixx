@@ -12,13 +12,25 @@ import io;
 export module renderer;
 
 export namespace tr
-{
+{		
+	struct Config
+	{
+		enum Projection
+		{
+			orthogonal,
+			perspective
+		};
+		Projection proj;
+	};
 	class TinyRender
 	{
 	public:
+
+		
 		bool Init(std::string& modelName, unsigned int& texture);
 		bool Render(Scene& scene);
 		bool LoadTexture(std::string& textureName);
+		void UpdateConfig(Config& config);
 		~TinyRender();
 
 	private:
@@ -38,6 +50,8 @@ export namespace tr
 		io::TgaImage   m_texture;
 
 		bool m_lineMode;
+
+		Config m_config;
 	};
 
 	bool TinyRender::Init(std::string& modelName, unsigned int& textureHandle)
@@ -53,7 +67,7 @@ export namespace tr
 
 	bool TinyRender::Render(Scene& scene)
 	{
-		auto [width, height] = scene.GetSize();
+		auto [width, height] = scene.GetWindowSize();
 		auto lightDir = scene.GetLight();
 		if (m_frameBuffer)
 			m_frameBuffer = (unsigned char*)realloc(m_frameBuffer, width * height * 3);
@@ -69,6 +83,9 @@ export namespace tr
 		{
 			m_zBuffer[i] = -std::numeric_limits<double>::infinity();
 		}
+
+		auto viewDir = scene.GetDir();
+		auto viewPos = scene.GetPos();
 
 		for (size_t i = 0; i < m_model.GetFaceNum(); i++)
 		{
@@ -92,9 +109,23 @@ export namespace tr
 				auto v1 = face.vertices[1];
 				auto v2 = face.vertices[2];
 
-				math::Point3f p0((v0.x + 1.) * width / 2., (v0.y + 1.) * height / 2., v0.z);
-				math::Point3f p1((v1.x + 1.) * width / 2., (v1.y + 1.) * height / 2., v1.z);
-				math::Point3f p2((v2.x + 1.) * width / 2., (v2.y + 1.) * height / 2., v2.z);
+				math::Point3f p0, p1, p2;
+				if (m_config.proj == Config::orthogonal)
+				{
+					p0 = math::Point3f((v0.x + 1.f) * width / 2., (v0.y + 1.f) * height / 2., v0.z);
+					p1 = math::Point3f((v1.x + 1.f) * width / 2., (v1.y + 1.f) * height / 2., v1.z);
+					p2 = math::Point3f((v2.x + 1.f) * width / 2., (v2.y + 1.f) * height / 2., v2.z);
+				}
+				else if(m_config.proj == Config::perspective)
+				{
+					v0 = v0 / (1 - (v0.z / viewPos.z));
+					v1 = v1 / (1 - (v1.z / viewPos.z));
+					v2 = v2 / (1 - (v2.z / viewPos.z));
+
+					p0 = math::Point3f((v0.x + 1.f) * width / 2., (v0.y + 1.f) * height / 2., v0.z);
+					p1 = math::Point3f((v1.x + 1.f) * width / 2., (v1.y + 1.f) * height / 2., v1.z);
+					p2 = math::Point3f((v2.x + 1.f) * width / 2., (v2.y + 1.f) * height / 2., v2.z);
+				}
 
 				math::Triangle3f tri   = { p0, p1, p2 };
 				math::Vec2f      vt[3] = { face.texCoords[0], face.texCoords[1], face.texCoords[2] };
@@ -126,6 +157,11 @@ export namespace tr
 	bool TinyRender::LoadTexture(std::string& textureName)
 	{
 		return m_texture.ReadTgaFile(textureName.c_str());
+	}
+
+	void TinyRender::UpdateConfig(Config& config)
+	{
+		m_config = config;
 	}
 
 	TinyRender::~TinyRender()
@@ -191,6 +227,8 @@ export namespace tr
 		{
 			for (int y = std::floor(bounding_min.y); y <= std::ceil(bounding_max.y); y++)
 			{
+				if (x >= width || y >= height || x < 0 || y < 0)
+					continue;
 				if (InsideTriangle(tri, x, y))
 				{
 					// Get barycentric to interpolate depth z
@@ -240,6 +278,8 @@ export namespace tr
 		{
 			for (int y = std::floor(bounding_min.y); y <= std::ceil(bounding_max.y); y++)
 			{
+				if (x >= width || y >= height || x < 0 || y < 0)
+					continue;
 				if (InsideTriangle(tri, x, y))
 				{
 					// Get barycentric to interpolate depth z
