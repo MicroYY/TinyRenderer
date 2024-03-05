@@ -10,6 +10,7 @@ export namespace tr
 	struct Camera
 	{
 		math::Vec3f pos;
+		math::Vec3f rot;
 		math::Vec3f dir;
 	};
 	class Scene
@@ -22,6 +23,7 @@ export namespace tr
 		std::tuple<int, int> GetWindowSize();
 		math::Vec3f GetLight();
 		math::Vec3f	GetPos();
+		math::Vec3f GetRot();
 		math::Vec3f GetDir();
 	private:
 		int m_width;
@@ -57,6 +59,10 @@ export namespace tr
 	math::Vec3f Scene::GetPos()
 	{
 		return m_camera.pos;
+	}
+	math::Vec3f Scene::GetRot()
+	{
+		return m_camera.rot;
 	}
 	math::Vec3f Scene::GetDir()
 	{

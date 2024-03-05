@@ -21,6 +21,11 @@
 //#define STB_IMAGE_IMPLEMENTATION
 //#include "stb_image.h"
 
+import shader;
+import io;
+import renderer;
+import scene;
+
 ///
 ///      y
 ///      ^
@@ -28,7 +33,7 @@
 ///      |
 ///      |
 ///      ----------------> x
-///      2D
+///             2D
 /// 
 ///           y
 ///           ^
@@ -41,12 +46,7 @@
 ///        /
 ///       v
 ///       z
-/// 
-
-import shader;
-import io;
-import renderer;
-import scene;
+///              3D
 
 // [Win32] Our example includes a copy of glfw3.lib pre-compiled with VS2010 to maximize ease of testing and compatibility with old VS compilers.
 // To link with VS2010-era libraries, VS2015+ requires linking with legacy_stdio_definitions.lib, which we do using this pragma.
@@ -312,12 +312,22 @@ int main(int, char**)
 				modelFD.Close();
 			}
 
-			ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+			//ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
 
-			static int projection = 0;
-			ImGui::RadioButton("orthogonal projection", &projection, tr::Config::orthogonal); ImGui::SameLine();
-			ImGui::RadioButton("perspective projection", &projection, tr::Config::perspective);
+			static int projection = 1;
+			ImGui::RadioButton("perspective projection", &projection, tr::Config::perspective); ImGui::SameLine();
+			ImGui::RadioButton("orthogonal projection", &projection, tr::Config::orthogonal);
 			config.proj = (tr::Config::Projection)projection;
+
+			// camera
+			static float camPos[3] = { 0.0f, 0.0f, 10.0f };
+			static float camRot[3] = { 0.0f, 0.0f, 0.0f };
+			ImGui::DragFloat3("camera pos", camPos, 0.1f, -100.0f, 100.0f, "%.1f");
+			ImGui::DragFloat3("camera rot", camRot, 0.1f, 0.0f,    360.0f, "%.1f deg");
+			camera.pos = { camPos[0], camPos[1], camPos[2] };
+			camera.rot = { camRot[0], camRot[1], camRot[2] };
+
+			// 
 
 			ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
 			ImGui::Checkbox("Another Window", &show_another_window);

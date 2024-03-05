@@ -7,6 +7,8 @@ export module math;
 
 export namespace math
 {
+
+	// vec
 	template <class T, int N>
 	struct Vec
 	{
@@ -91,12 +93,18 @@ export namespace math
 		return v1 ^ v2;
 	}
 
+
+
+
+	// matrix
 	template <class T, int M, int N>
 	struct Matrix
 	{
+		Matrix() {};
 		T data[M][N];
 	};
 
+	// matrix 2x2
 	template <class T>
 	struct Matrix<T, 2, 2>
 	{
@@ -120,7 +128,157 @@ export namespace math
 
 	};
 
+	// matrix3x3
+	template <class T>
+	struct Matrix<T, 3, 3>
+	{
+		typedef Matrix<T, 3, 3> type;
 
+		Matrix(T v1, T v2, T v3, T v4, T v5, T v6, T v7, T v8, T v9) 
+		{
+			data[0][0] = v1, data[0][1] = v2, data[0][2] = v3;
+			data[1][0] = v4, data[1][1] = v5, data[1][2] = v6;
+			data[2][0] = v7, data[2][1] = v8, data[2][2] = v9;
+		};
+
+		union
+		{
+			//struct { T a, b, c, d; };
+			//T data[9];
+			T data[3][3];
+		};
+
+		template <class> friend std::ostream& operator<<(std::ostream&, const Matrix<T, 3, 3>&);
+		template <class> friend std::istream& operator>>(std::istream&, const Matrix<T, 3, 3>&);
+
+		static constexpr type Indentity()
+		{
+			return type(
+				1, 0, 0,
+				0, 1, 0,
+				0, 0, 1);
+		}
+	};
+
+	template<class T>
+	std::ostream& operator<<(std::ostream& out, const Matrix<T, 3, 3>& m)
+	{
+		// TODO: insert return statement here
+	}
+
+	template<class T >
+	std::istream& operator>>(std::istream& in, const Matrix<T, 3, 3>& m)
+	{
+		for (size_t i = 0; i < 3; i++)
+		{
+			for (size_t j = 0; j < 3; j++) 
+			{
+				in >> m.data[i][j];
+			}
+		}
+	}
+
+	// matrix4x4
+	template <class T>
+	struct Matrix<T, 4, 4>
+	{
+		typedef Matrix<T, 4, 4> type;
+
+		Matrix() {}
+
+		Matrix(
+			T v1,  T v2,  T v3,  T v4,
+			T v5,  T v6,  T v7,  T v8,
+			T v9,  T v10, T v11, T v12,
+			T v13, T v14, T v15, T v16)
+		{
+			data[0][0] = v1,  data[0][1] = v2,  data[0][2] = v3,  data[0][3] = v4;
+			data[1][0] = v5,  data[1][1] = v6,  data[1][2] = v7,  data[1][3] = v8;
+			data[2][0] = v9,  data[2][1] = v10, data[2][2] = v11, data[2][3] = v12;
+			data[3][0] = v13, data[3][1] = v14, data[3][2] = v15, data[3][3] = v16;
+		};
+
+		union
+		{
+			//struct { T a, b, c, d; };
+			//T data[9];
+			T data[4][4];
+		};
+
+		type operator*(const type& other)
+		{
+			T trans;
+			type temp;
+			for (int i = 0; i < 4; ++i)
+			{
+				for (int j = 0; j < 4; ++j)
+				{
+					trans = 0;
+					for (int k = 0; k < 4; ++k)
+						trans += data[i][k] * other.data[k][j];
+					temp.data[i][j] = trans;
+				}
+			}
+			return temp;
+		}
+
+		Vec<T, 4> operator*(const Vec<T, 4>& vec)
+		{
+			Vec<T, 4> ret;
+
+			for (int i = 0; i < 4; ++i)
+			{
+				T acc = 0;
+				for (int j = 0; j < 4; ++j)
+				{
+					acc += data[i][j] * vec.data[j];
+				}
+				ret.data[i] = acc;
+				
+			}
+			return ret;
+		}
+
+		template <class> friend std::ostream& operator<<(std::ostream&, const Matrix<T, 4, 4>&);
+		template <class> friend std::istream& operator>>(std::istream&, const Matrix<T, 4, 4>&);
+
+		static constexpr type Indentity()
+		{
+			return type(
+				1, 0, 0, 0,
+				0, 1, 0, 0,
+				0, 0, 1, 0,
+				0, 0, 0, 1);
+		}
+	};
+
+	template<class T>
+	std::ostream& operator<<(std::ostream& out, const Matrix<T, 4, 4>& m)
+	{
+		out << "[" << 
+			m.data[0][0] << ", " << m.data[0][1] << ", " << m.data[0][2] << ", " << m.data[0][3] << "\n " <<
+			m.data[1][0] << ", " << m.data[1][1] << ", " << m.data[1][2] << ", " << m.data[1][3] << "\n " <<
+			m.data[2][0] << ", " << m.data[2][1] << ", " << m.data[2][2] << ", " << m.data[2][3] << "\n " <<
+			m.data[3][0] << ", " << m.data[3][1] << ", " << m.data[3][2] << ", " << m.data[3][3] <<
+			"]\n";
+		return out;
+	}
+
+	template<class T >
+	std::istream& operator>>(std::istream& in, const Matrix<T, 4, 4>& m)
+	{
+		for (size_t i = 0; i < 4; i++)
+		{
+			for (size_t j = 0; j < 4; j++)
+			{
+				in >> m.data[i][j];
+			}
+		}
+	}
+
+
+
+	// defs
 	typedef Vec<int,   2> Vec2i;
 	typedef Vec<float, 2> Vec2f;
 	typedef Vec<int,   3> Vec3i;
@@ -135,6 +293,7 @@ export namespace math
 
 	typedef Matrix<float, 2, 2> Matrix2f;
 	typedef Matrix<float, 3, 3> Matrix3f;
+	typedef Matrix<float, 4, 4> Matrix4f;
 
 	typedef Point2f Triangle2f[3];
 	typedef Point2i Triangle2i[3];
